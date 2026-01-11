@@ -1,0 +1,44 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  password  String
+  name      String
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  debtsAsCreditor Debt[] @relation("CreditorDebts")
+  debtsAsDebtor   Debt[] @relation("DebtorDebts")
+
+  @@map("users")
+}
+
+model Debt {
+  id          String   @id @default(uuid())
+  amount      Decimal  @db.Decimal(10, 2)
+  description String?
+  status      String   @default("PENDING")
+  dueDate     DateTime? @map("due_date")
+  paidAt      DateTime? @map("paid_at")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  creditorId String @map("creditor_id")
+  creditor   User   @relation("CreditorDebts", fields: [creditorId], references: [id], onDelete: Cascade)
+
+  debtorId String @map("debtor_id")
+  debtor   User   @relation("DebtorDebts", fields: [debtorId], references: [id], onDelete: Cascade)
+
+  @@map("debts")
+  @@index([creditorId])
+  @@index([debtorId])
+  @@index([status])
+}
