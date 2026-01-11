@@ -41,4 +41,4 @@ model Debt {
   @@index([creditorId])
   @@index([debtorId])
   @@index([status])
-}
+}   
