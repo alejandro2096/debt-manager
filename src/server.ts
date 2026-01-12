@@ -48,13 +48,13 @@ async function bootstrap() {
         const registerUser = new RegisterUser(userRepository, bcryptHasher, jwtTokenManager);
         const loginUser = new LoginUser(userRepository, bcryptHasher, jwtTokenManager);
 
-        // Initialize use cases - Debts
-        const createDebt = new CreateDebt(debtRepository, userRepository);
+        // Initialize use cases - Debts (WITH REDIS CACHE)
+        const createDebt = new CreateDebt(debtRepository, userRepository, redisCache);
         const getDebtById = new GetDebtById(debtRepository);
-        const updateDebt = new UpdateDebt(debtRepository);
-        const deleteDebt = new DeleteDebt(debtRepository);
-        const listUserDebts = new ListUserDebts(debtRepository);
-        const markDebtAsPaid = new MarkDebtAsPaid(debtRepository);
+        const updateDebt = new UpdateDebt(debtRepository, redisCache);
+        const deleteDebt = new DeleteDebt(debtRepository, redisCache);
+        const listUserDebts = new ListUserDebts(debtRepository, redisCache);
+        const markDebtAsPaid = new MarkDebtAsPaid(debtRepository, redisCache);
         const getUserDebtStats = new GetUserDebtStats(debtRepository);
 
         // Initialize controllers
@@ -77,6 +77,7 @@ async function bootstrap() {
             logger.info(`Server is running on port ${PORT}`);
             logger.info(`Environment: ${process.env.NODE_ENV || 'development'}`);
             logger.info(`API URL: http://localhost:${PORT}/api/v1`);
+            logger.info(`Redis cache: ENABLED`);
         });
 
         // Graceful shutdown
