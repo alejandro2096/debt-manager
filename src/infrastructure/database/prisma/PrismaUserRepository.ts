@@ -1,7 +1,6 @@
 import { PrismaClient } from '@prisma/client';
 import { IUserRepository } from '../../../domain/repositories/IUserRepository';
 import { User } from '../../../domain/entities/User';
-import { NotFoundError } from '../../../shared/errors/AppError';
 
 export class PrismaUserRepository implements IUserRepository {
     constructor(private readonly prisma: PrismaClient) { }
