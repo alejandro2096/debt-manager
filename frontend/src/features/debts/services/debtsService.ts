@@ -50,6 +50,16 @@ export type UpdateDebtDTO = {
     dueDate?: string
 }
 
+export type DebtStats = {
+    totalPaid: number
+    totalPending: number
+    countPaid: number
+    countPending: number
+    toReceivePending: number
+    toPayPending: number
+    netPending: number
+}
+
 export const debtsService = {
     async list(filters?: DebtFilters) {
         const { data } = await axiosInstance.get<ApiResponse<Debt[]>>('/debts', { params: filters })
@@ -103,6 +113,15 @@ export const debtsService = {
         const filename = getFilenameFromDisposition(disposition) ?? `debts.${format}`
 
         return { blob: new Blob([res.data], { type: contentType }), filename }
+    },
+
+    async stats(): Promise<DebtStats> {
+        const res = await axiosInstance.get('/debts/stats')
+
+        // backend típico: { success: true, data: {...} }
+        const payload = (res.data?.data ?? res.data) as DebtStats
+
+        return payload
     },
 }
 

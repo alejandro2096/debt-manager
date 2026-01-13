@@ -14,6 +14,18 @@ type UserOption = {
   email: string
 }
 
+type DebtStats = {
+  totalPaid: number
+  totalPending: number
+  countPaid: number
+  countPending: number
+  toReceivePending: number
+  toPayPending: number
+  netPending: number
+  amountPending: number
+  amountPaid: number
+}
+
 function formatMoney(value: number) {
   try {
     return new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP' }).format(value)
@@ -27,6 +39,51 @@ function toDateInputValue(iso: string | null | undefined) {
   const d = new Date(iso)
   if (Number.isNaN(d.getTime())) return ''
   return d.toISOString().slice(0, 10)
+}
+
+/** Hook local para stats (no necesitas crear otro archivo) */
+function useDebtStats() {
+  const [stats, setStats] = useState<DebtStats | null>(null)
+  const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  const refetch = async () => {
+    setIsLoading(true)
+    setError(null)
+    try {
+      const res = await axiosInstance.get('/debts/stats')
+      // backend: { success, data }
+      setStats(res.data.data as DebtStats)
+    } catch (e: any) {
+      setError(e?.response?.data?.message || e?.message || 'Error cargando estadísticas')
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    let alive = true
+    ;(async () => {
+      setIsLoading(true)
+      setError(null)
+      try {
+        const res = await axiosInstance.get('/debts/stats')
+        if (!alive) return
+        setStats(res.data.data as DebtStats)
+      } catch (e: any) {
+        if (!alive) return
+        setError(e?.response?.data?.message || e?.message || 'Error cargando estadísticas')
+      } finally {
+        if (!alive) return
+        setIsLoading(false)
+      }
+    })()
+    return () => {
+      alive = false
+    }
+  }, [])
+
+  return { stats, isLoading, error, refetch, setStats }
 }
 
 function CreateDebtModal({
@@ -52,45 +109,41 @@ function CreateDebtModal({
   const [isSaving, setIsSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  // 🔥 Importante: SOLO pedimos usuarios cuando el modal esté abierto
+  // SOLO pedimos usuarios cuando el modal esté abierto
   useEffect(() => {
     if (!open) return
 
     let alive = true
-      ; (async () => {
-        setUsersLoading(true)
-        setUsersError(null)
-        try {
-          const res = await axiosInstance.get('/users')
+    ;(async () => {
+      setUsersLoading(true)
+      setUsersError(null)
+      try {
+        const res = await axiosInstance.get('/users')
+        // backend: { success, data }
+        const raw = res.data.data
+        const list: any[] = raw?.items ?? raw?.users ?? raw ?? []
 
-          // soporta varias formas de respuesta: data.data, data.data.items, data.items, data
-          const raw = (res as any)?.data?.data ?? (res as any)?.data
-          const list: any[] =
-            raw?.items ?? raw?.users ?? raw ?? []
+        const normalized: UserOption[] = (Array.isArray(list) ? list : []).map((u: any) => ({
+          id: u.id,
+          name: u.name,
+          email: u.email,
+        }))
 
-          const normalized: UserOption[] = (Array.isArray(list) ? list : []).map((u: any) => ({
-            id: u.id,
-            name: u.name,
-            email: u.email,
-          }))
+        const meId = user?.id
+        const filtered = meId ? normalized.filter((u) => u.id !== meId) : normalized
 
-          // opcional: filtrar mi propio usuario si existe en contexto
-          const meId = user?.id
-          const filtered = meId ? normalized.filter((u) => u.id !== meId) : normalized
+        if (!alive) return
+        setUsers(filtered)
 
-          if (!alive) return
-          setUsers(filtered)
-
-          // set default
-          if (!debtorId && filtered.length > 0) setDebtorId(filtered[0].id)
-        } catch (e: any) {
-          if (!alive) return
-          setUsersError(e?.response?.data?.message || e?.message || 'No se pudieron cargar usuarios')
-        } finally {
-          if (!alive) return
-          setUsersLoading(false)
-        }
-      })()
+        if (!debtorId && filtered.length > 0) setDebtorId(filtered[0].id)
+      } catch (e: any) {
+        if (!alive) return
+        setUsersError(e?.response?.data?.message || e?.message || 'No se pudieron cargar usuarios')
+      } finally {
+        if (!alive) return
+        setUsersLoading(false)
+      }
+    })()
 
     return () => {
       alive = false
@@ -141,23 +194,20 @@ function CreateDebtModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4" role="dialog" aria-modal="true">
-      {/* overlay con blur */}
-      <div
-        className="absolute inset-0 bg-black/40 backdrop-blur-md"
-        onClick={onClose}
-        aria-hidden="true"
-      />
+      {/* overlay blur */}
+      <div className="absolute inset-0 bg-black/40 backdrop-blur-md" onClick={onClose} aria-hidden="true" />
 
       {/* modal */}
       <div className="relative z-10 w-full max-w-lg rounded-2xl border border-zinc-800 bg-zinc-950 text-zinc-100 shadow-xl">
         <div className="flex items-center justify-between border-b border-zinc-800 px-5 py-4">
           <div>
-            <h3 className="text-base font-semibold !text-zinc-100">Nueva deuda</h3>
-            <p className="mt-0.5 text-xs !text-zinc-400">Crea una deuda para un usuario existente.</p>
+            <h3 className="text-base font-semibold text-zinc-100">Nueva deuda</h3>
+            <p className="mt-0.5 text-xs text-zinc-400">Crea una deuda para un usuario existente.</p>
           </div>
+
           <button
             onClick={onClose}
-            className="rounded-lg border border-zinc-800 bg-zinc-900 px-3 py-2 text-xs !text-zinc-100 hover:border-zinc-600"
+            className="rounded-lg border border-zinc-800 bg-zinc-900 px-3 py-2 text-xs text-zinc-100 hover:border-zinc-600"
           >
             Cerrar
           </button>
@@ -208,6 +258,7 @@ function CreateDebtModal({
             />
           </label>
 
+          {/* Si quieres habilitar descripción y vencimiento, descomenta */}
           {/* <label className="block">
             <span className="text-sm text-zinc-200">Descripción (opcional)</span>
             <input
@@ -216,9 +267,9 @@ function CreateDebtModal({
               className="mt-1 w-full rounded-xl border border-zinc-800 bg-zinc-900 px-3 py-2 text-zinc-100 outline-none focus:border-zinc-600"
               placeholder="Ej: Almuerzo, préstamo, etc."
             />
-          </label> */}
+          </label>
 
-          {/* <label className="block">
+          <label className="block">
             <span className="text-sm text-zinc-200">Fecha de vencimiento (opcional)</span>
             <input
               type="date"
@@ -246,7 +297,7 @@ function CreateDebtModal({
             <button
               type="submit"
               disabled={isSaving || usersLoading || !!usersError}
-              className="rrounded-xl border border-zinc-800 bg-zinc-900 px-4 py-2 text-sm text-zinc-100 hover:border-zinc-600"
+              className="rounded-lg border border-zinc-800 bg-zinc-950 px-3 py-2 text-sm text-zinc-100 hover:border-zinc-600"
             >
               {isSaving ? 'Creando…' : 'Crear deuda'}
             </button>
@@ -269,24 +320,14 @@ export default function DebtsPage() {
   }, [page, status])
 
   const { items, isLoading, error, pagination, refetch } = useDebts(filters)
+  const { stats, isLoading: statsLoading, error: statsError, refetch: refetchStats } = useDebtStats()
 
   useEffect(() => {
     setPage(1)
   }, [status])
 
-  const canPrev = (pagination?.page ?? 1) > 1;
-  const canNext = pagination ? pagination.page < pagination.totalPages : false;
-
-  const onExportCSV = async () => {
-    try {
-      const { blob, filename } = await debtsService.export('csv')
-      downloadBlob(blob, filename)
-        ; (window as any).__toast?.(`Descargado: ${filename}`, 'success')
-    } catch (e) {
-      ; (window as any).__toast?.('No se pudo exportar el CSV', 'error')
-    }
-  }
-
+  const canPrev = (pagination?.page ?? 1) > 1
+  const canNext = pagination ? pagination.page < pagination.totalPages : false
 
   function downloadBlob(blob: Blob, filename: string) {
     const url = window.URL.createObjectURL(blob)
@@ -299,6 +340,17 @@ export default function DebtsPage() {
     window.URL.revokeObjectURL(url)
   }
 
+  const onExportCSV = async () => {
+    try {
+      const { blob, filename } = await debtsService.export('csv')
+      downloadBlob(blob, filename)
+      ;(window as any).__toast?.(`Descargado: ${filename}`, 'success')
+    } catch {
+      ;(window as any).__toast?.('No se pudo exportar el CSV', 'error')
+    }
+  }
+
+  const netClass = (stats?.netPending ?? 0) >= 0 ? 'text-emerald-200' : 'text-red-200'
 
   return (
     <div className="space-y-6">
@@ -324,11 +376,11 @@ export default function DebtsPage() {
 
           <button
             onClick={() => setIsCreateOpen(true)}
-            // className="rounded-lg bg-zinc-100 px-4 py-2 text-sm font-semibold text-zinc-900 hover:opacity-95"
-            className="rounded-xl border border-zinc-800 bg-zinc-900 px-4 py-2 text-sm text-zinc-100 hover:border-zinc-600"
+            className="rounded-lg border border-zinc-800 bg-zinc-950 px-3 py-2 text-sm text-zinc-100 hover:border-zinc-600"
           >
             Nueva deuda
           </button>
+
           <button
             onClick={onExportCSV}
             className="rounded-lg border border-zinc-800 bg-zinc-950 px-3 py-2 text-sm text-zinc-100 hover:border-zinc-600"
@@ -338,6 +390,49 @@ export default function DebtsPage() {
         </div>
       </div>
 
+      {/* Stats */}
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+        <div className="rounded-2xl border border-zinc-800 bg-zinc-900 p-4">
+          <div className="text-xs text-zinc-400">Pendiente total</div>
+          <div className="mt-1 text-xl font-semibold text-zinc-100">
+            {statsLoading ? '—' : formatMoney(stats?.amountPending ?? 0)}
+          </div>
+          <div className="mt-1 text-xs text-zinc-500">{statsLoading ? '' : `${stats?.totalPending ?? 0} deudas`}</div>
+        </div>
+
+        <div className="rounded-2xl border border-zinc-800 bg-zinc-900 p-4">
+          <div className="text-xs text-zinc-400">Total pagado</div>
+          <div className="mt-1 text-xl font-semibold text-zinc-100">
+            {statsLoading ? '—' : formatMoney(stats?.amountPaid ?? 0)}
+          </div>
+          <div className="mt-1 text-xs text-zinc-500">{statsLoading ? '' : `${stats?.totalPaid ?? 0} deudas`}</div>
+        </div>
+
+        <div className="rounded-2xl border border-zinc-800 bg-zinc-900 p-4">
+          <div className="text-xs text-zinc-400">Saldo neto pendiente</div>
+          <div className={`mt-1 text-xl font-semibold ${netClass}`}>
+            {statsLoading ? '—' : formatMoney((stats?.amountPending ?? 0) + (stats?.amountPaid ?? 0))}
+          </div>
+          <div className="mt-1 text-xs text-zinc-500">
+            {/* {statsLoading
+              ? ''
+              : `Te deben: ${formatMoney(stats?.toReceivePending ?? 0)} · Debes: ${formatMoney(stats?.toPayPending ?? 0)}`} */}
+          </div>
+        </div>
+      </div>
+
+      {statsError && (
+        <div className="flex items-center justify-between gap-3 rounded-xl border border-red-900/50 bg-red-950/30 px-3 py-2 text-sm text-red-200">
+          <span>{statsError}</span>
+          <button
+            onClick={refetchStats}
+            className="rounded-lg border border-red-900/60 bg-red-950/20 px-3 py-2 text-xs text-red-200 hover:border-red-700"
+          >
+            Reintentar
+          </button>
+        </div>
+      )}
+
       {isLoading && <p className="text-zinc-400">Cargando...</p>}
 
       {error && (
@@ -346,9 +441,7 @@ export default function DebtsPage() {
         </div>
       )}
 
-      {!isLoading && !error && items.length === 0 && (
-        <p className="text-zinc-400">Aún no tienes deudas.</p>
-      )}
+      {!isLoading && !error && items.length === 0 && <p className="text-zinc-400">Aún no tienes deudas.</p>}
 
       <ul className="space-y-3">
         {items.map((d: Debt) => (
@@ -359,19 +452,18 @@ export default function DebtsPage() {
                   <span className="text-lg font-semibold text-zinc-100">{formatMoney(d.amount)}</span>
 
                   <span
-                    className={`rounded-full px-2 py-0.5 text-xs border ${d.status === 'PAID'
-                      ? 'bg-emerald-950/40 text-emerald-200 border-emerald-900/50'
-                      : 'bg-amber-950/40 text-amber-200 border-amber-900/50'
-                      }`}
+                    className={`rounded-full px-2 py-0.5 text-xs border ${
+                      d.status === 'PAID'
+                        ? 'bg-emerald-950/40 text-emerald-200 border-emerald-900/50'
+                        : 'bg-amber-950/40 text-amber-200 border-amber-900/50'
+                    }`}
                   >
                     {d.status}
                   </span>
                 </div>
 
                 {d.description && <p className="mt-2 text-sm text-zinc-300">{d.description}</p>}
-                <p className="mt-2 text-xs text-zinc-500">
-                  Vence: {toDateInputValue(d.dueDate) || '—'}
-                </p>
+                <p className="mt-2 text-xs text-zinc-500">Vence: {toDateInputValue(d.dueDate) || '—'}</p>
               </div>
 
               <Link
@@ -388,8 +480,7 @@ export default function DebtsPage() {
       {!!pagination && (
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
           <div className="text-xs text-zinc-400">
-            Página {pagination.page} de {pagination.totalPages} · {pagination.totalPages} items · Límite{' '}
-            {pagination.limit}
+            Página {pagination.page} de {pagination.totalPages} · Total {pagination.totalPages ?? '—'} · Límite {pagination.limit}
           </div>
 
           <div className="flex items-center gap-2">
@@ -415,7 +506,9 @@ export default function DebtsPage() {
         open={isCreateOpen}
         onClose={() => setIsCreateOpen(false)}
         onCreated={async () => {
+          // refresca lista + stats
           await refetch()
+          await refetchStats()
         }}
       />
     </div>
