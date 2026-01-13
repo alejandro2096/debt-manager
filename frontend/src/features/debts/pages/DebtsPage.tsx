@@ -274,8 +274,31 @@ export default function DebtsPage() {
     setPage(1)
   }, [status])
 
-  const canPrev = (pagination?.page ?? 1) > 1
-  const canNext = pagination ? pagination.page < pagination.totalPages : false
+  const canPrev = (pagination?.page ?? 1) > 1;
+  const canNext = pagination ? pagination.page < pagination.totalPages : false;
+
+  const onExportCSV = async () => {
+    try {
+      const { blob, filename } = await debtsService.export('csv')
+      downloadBlob(blob, filename)
+        ; (window as any).__toast?.(`Descargado: ${filename}`, 'success')
+    } catch (e) {
+      ; (window as any).__toast?.('No se pudo exportar el CSV', 'error')
+    }
+  }
+
+
+  function downloadBlob(blob: Blob, filename: string) {
+    const url = window.URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = filename
+    document.body.appendChild(a)
+    a.click()
+    a.remove()
+    window.URL.revokeObjectURL(url)
+  }
+
 
   return (
     <div className="space-y-6">
@@ -299,13 +322,18 @@ export default function DebtsPage() {
             </select>
           </div>
 
-          {/* ✅ Botón con texto visible */}
           <button
             onClick={() => setIsCreateOpen(true)}
             // className="rounded-lg bg-zinc-100 px-4 py-2 text-sm font-semibold text-zinc-900 hover:opacity-95"
             className="rounded-xl border border-zinc-800 bg-zinc-900 px-4 py-2 text-sm text-zinc-100 hover:border-zinc-600"
           >
             Nueva deuda
+          </button>
+          <button
+            onClick={onExportCSV}
+            className="rounded-lg border border-zinc-800 bg-zinc-950 px-3 py-2 text-sm text-zinc-100 hover:border-zinc-600"
+          >
+            Exportar CSV
           </button>
         </div>
       </div>

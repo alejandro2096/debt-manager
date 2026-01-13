@@ -1,9 +1,26 @@
 import { Outlet, Link } from 'react-router-dom'
+import { useCallback, useState } from 'react'
 import { ROUTES } from '@/app/router/routes'
 import { useAuth } from '@/shared/hooks/useAuth'
+import Toast, { type ToastState } from '../components/Toast'
 
 export default function AppLayout() {
   const { user, logout } = useAuth()
+
+  const [toast, setToast] = useState<ToastState>({
+    open: false,
+    message: '',
+    type: 'info',
+  })
+
+  const closeToast = useCallback(() => {
+    setToast((t) => ({ ...t, open: false }))
+  }, [])
+
+    // helper global simple (para usarlo desde cualquier page sin Context extra)
+    ; (window as any).__toast = (message: string, type: ToastState['type'] = 'info') => {
+      setToast({ open: true, message, type })
+    }
 
   return (
     <div className="min-h-dvh bg-zinc-950 text-zinc-100">
@@ -32,6 +49,8 @@ export default function AppLayout() {
       <main className="mx-auto max-w-5xl px-4 py-6">
         <Outlet />
       </main>
+
+      <Toast open={toast.open} message={toast.message} type={toast.type} onClose={closeToast} />
     </div>
   )
 }
