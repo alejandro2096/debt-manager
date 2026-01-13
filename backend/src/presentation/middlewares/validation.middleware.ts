@@ -17,7 +17,7 @@ export const validate = (schema: ZodSchema) => {
           field: err.path.join('.'),
           message: err.message,
         }));
-        
+
         next(new ValidationError(JSON.stringify(errors)));
       } else {
         next(error);
@@ -37,7 +37,7 @@ export const validateBody = (schema: ZodSchema) => {
           field: err.path.join('.'),
           message: err.message,
         }));
-        
+
         next(new ValidationError(JSON.stringify(errors)));
       } else {
         next(error);
@@ -49,7 +49,12 @@ export const validateBody = (schema: ZodSchema) => {
 export const validateQuery = (schema: ZodSchema) => {
   return async (req: Request, _res: Response, next: NextFunction) => {
     try {
-      req.query = await schema.parseAsync(req.query) as any;
+      const parsed = await schema.parseAsync(req.query);
+
+      const q = req.query as any;
+
+      Object.assign(q, parsed);
+
       next();
     } catch (error) {
       if (error instanceof ZodError) {
@@ -57,7 +62,7 @@ export const validateQuery = (schema: ZodSchema) => {
           field: err.path.join('.'),
           message: err.message,
         }));
-        
+
         next(new ValidationError(JSON.stringify(errors)));
       } else {
         next(error);

@@ -1,6 +1,6 @@
 import { axiosInstance } from '@/core/api/axiosInstance'
 
-export type DebtStatus = 'PENDING' | 'PAID'
+export type DebtStatus = 'PENDING' | 'PAID' | 'pending' | 'paid'
 
 export type Debt = {
     id: string
