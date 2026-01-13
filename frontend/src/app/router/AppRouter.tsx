@@ -25,8 +25,15 @@ export const router = createBrowserRouter([
       {
         element: <AppLayout />,
         children: [
-          { path: ROUTES.debts, element: <DebtsPage /> },
-          { path: "/debts/:id", element: <DebtDetailPage /> },
+          {
+            path: ROUTES.debts, 
+            children: [
+              { index: true, element: <DebtsPage /> },     
+              { path: ":id", element: <DebtDetailPage /> }, 
+            ],
+          },
+
+          { path: "*", element: <Navigate to={ROUTES.debts} replace /> },
         ],
       },
     ],

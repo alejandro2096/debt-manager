@@ -55,10 +55,11 @@ export default function LoginPage() {
         <button
           type="submit"
           disabled={isLoading}
-          className="w-full rounded-lg bg-zinc-100 px-4 py-2 text-sm font-semibold text-zinc-900 disabled:cursor-not-allowed disabled:opacity-60"
+          className="w-full rounded-lg !bg-zinc-100 px-4 py-2 text-sm font-semibold !text-zinc-900 disabled:cursor-not-allowed disabled:opacity-60"
         >
           {isLoading ? 'Ingresando…' : 'Ingresar'}
         </button>
+
       </form>
 
       <p className="mt-4 text-sm text-zinc-400">

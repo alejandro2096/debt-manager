@@ -4,6 +4,6 @@ import { authMiddleware } from '../middlewares/auth.middleware'
 
 export const usersRouter = (authController: UsersController): Router => {
   const router = Router()
-  router.get('/users', authMiddleware, authController.list)
+  router.get('/', authMiddleware, authController.list)
   return router;
 }

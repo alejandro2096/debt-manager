@@ -12,6 +12,7 @@ export type Debt = {
     status: DebtStatus
     createdAt?: string
     updatedAt?: string
+    paidAt?: string | null
 }
 
 export type Pagination = {

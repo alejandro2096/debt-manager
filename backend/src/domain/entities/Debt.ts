@@ -11,7 +11,8 @@ export class Debt {
         public readonly dueDate: Date | null,
         public readonly paidAt: Date | null,
         public readonly createdAt: Date,
-        public readonly updatedAt: Date
+        public readonly updatedAt: Date,
+        public readonly name: string
     ) { }
 
     static create(data: {
@@ -25,6 +26,7 @@ export class Debt {
         paidAt?: Date | null;
         createdAt?: Date;
         updatedAt?: Date;
+        name?: string;
     }): Debt {
         return new Debt(
             data.id,
@@ -36,7 +38,8 @@ export class Debt {
             data.dueDate || null,
             data.paidAt || null,
             data.createdAt || new Date(),
-            data.updatedAt || new Date()
+            data.updatedAt || new Date(),
+            data.name || ''
         );
     }
 
@@ -64,6 +67,7 @@ export class Debt {
             paidAt: this.paidAt,
             createdAt: this.createdAt,
             updatedAt: this.updatedAt,
+            name: this.name,
         };
     }
 }
