@@ -6,11 +6,13 @@ import { createRoutes } from './presentation/routes';
 import { errorHandler } from './presentation/middlewares/error.middleware';
 import { AuthController } from './presentation/controllers/AuthController';
 import { DebtController } from './presentation/controllers/DebtController';
+import { UsersController } from './presentation/controllers/UsersController';
 import { CONSTANTS } from './shared/utils/constants';
 
 export const createApp = (
     authController: AuthController,
-    debtController: DebtController
+    debtController: DebtController,
+    usersController: UsersController
 ): Application => {
     const app = express();
 
@@ -34,7 +36,7 @@ export const createApp = (
     app.use(express.urlencoded({ extended: true }));
 
     // Routes
-    app.use('/api/v1', createRoutes(authController, debtController));
+    app.use('/api/v1', createRoutes(authController, debtController, usersController));
 
     // Error handler (must be last)
     app.use(errorHandler);

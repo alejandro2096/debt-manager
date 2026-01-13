@@ -1,5 +1,5 @@
 import { PrismaClient } from '@prisma/client';
-import { IUserRepository } from '../../../domain/repositories/IUserRepository';
+import { IUserRepository, PaginatedResultUsers } from '../../../domain/repositories/IUserRepository';
 import { User } from '../../../domain/entities/User';
 
 export class PrismaUserRepository implements IUserRepository {
@@ -63,5 +63,17 @@ export class PrismaUserRepository implements IUserRepository {
         });
 
         return count > 0;
+    }
+
+    async listPublic(): Promise<PaginatedResultUsers> {
+
+        const resp = await this.prisma.user.findMany({
+            select: { id: true, name: true, email: true },
+            orderBy: { name: 'asc' },
+        })
+
+        return {
+            data: resp
+        }
     }
 }

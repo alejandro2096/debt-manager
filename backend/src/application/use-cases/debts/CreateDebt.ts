@@ -1,4 +1,4 @@
-import { v4 as uuidv4 } from 'uuid';
+import { randomUUID } from 'crypto';
 import { IDebtRepository } from '../../../domain/repositories/IDebtRepository';
 import { IUserRepository } from '../../../domain/repositories/IUserRepository';
 import { Debt } from '../../../domain/entities/Debt';
@@ -38,7 +38,7 @@ export class CreateDebt {
 
         // Create debt
         const debt = Debt.create({
-            id: uuidv4(),
+            id: randomUUID(),
             creditorId,
             debtorId: data.debtorId,
             amount: data.amount,

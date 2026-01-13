@@ -15,6 +15,7 @@ import { jwtTokenManager } from './infrastructure/security/JwtTokenManager';
 // Use Cases - Auth
 import { RegisterUser } from './application/use-cases/auth/RegisterUser';
 import { LoginUser } from './application/use-cases/auth/LoginUser';
+import { ListUsers } from './application/use-cases/users/ListUsers';
 
 // Use Cases - Debts
 import { CreateDebt } from './application/use-cases/debts/CreateDebt';
@@ -28,6 +29,7 @@ import { GetUserDebtStats } from './application/use-cases/debts/GetUserDebtStats
 // Controllers
 import { AuthController } from './presentation/controllers/AuthController';
 import { DebtController } from './presentation/controllers/DebtController';
+import { UsersController } from './presentation/controllers/UsersController';
 
 const PORT = process.env.PORT || 3000;
 
@@ -47,6 +49,7 @@ async function bootstrap() {
         // Initialize use cases - Auth
         const registerUser = new RegisterUser(userRepository, bcryptHasher, jwtTokenManager);
         const loginUser = new LoginUser(userRepository, bcryptHasher, jwtTokenManager);
+        const listUsers = new ListUsers(userRepository);
 
         // Initialize use cases - Debts (WITH REDIS CACHE)
         const createDebt = new CreateDebt(debtRepository, userRepository, redisCache);
@@ -68,9 +71,10 @@ async function bootstrap() {
             markDebtAsPaid,
             getUserDebtStats
         );
+        const usersController = new UsersController(listUsers);
 
         // Create Express app
-        const app = createApp(authController, debtController);
+        const app = createApp(authController, debtController, usersController);
 
         // Start server
         const server = app.listen(PORT, () => {

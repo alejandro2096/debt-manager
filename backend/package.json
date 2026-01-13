@@ -12,8 +12,8 @@
 		"prisma:generate": "prisma generate",
 		"prisma:migrate": "prisma migrate dev",
 		"prisma:studio": "prisma studio",
-		"docker:up": "docker-compose up -d",
-		"docker:down": "docker-compose down"
+		"docker:up": "docker compose -f ../docker-compose.yml up -d",
+		"docker:down": "docker compose -f ../docker-compose.yml down"
 	},
 	"keywords": [],
 	"author": "",
@@ -29,7 +29,6 @@
 		"helmet": "^8.1.0",
 		"jsonwebtoken": "^9.0.3",
 		"redis": "^5.10.0",
-		"uuid": "^13.0.0",
 		"winston": "^3.19.0",
 		"zod": "^4.3.5"
 	},

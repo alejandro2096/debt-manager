@@ -35,9 +35,6 @@ importers:
       redis:
         specifier: ^5.10.0
         version: 5.10.0
-      uuid:
-        specifier: ^13.0.0
-        version: 13.0.0
       winston:
         specifier: ^3.19.0
         version: 3.19.0

@@ -1,34 +1,54 @@
+# =========================
 # Dependencies
+# =========================
 node_modules/
 .pnpm-store/
 
+# =========================
 # Build
+# =========================
 dist/
 build/
 
+# =========================
 # Environment
+# =========================
 .env
 .env.local
 .env.*.local
+.env*
+!.env.example
 
+# =========================
 # Logs
+# =========================
 logs/
 *.log
 npm-debug.log*
 
+# =========================
 # Testing
+# =========================
 coverage/
 
-# IDE
+# =========================
+# IDE / OS
+# =========================
 .vscode/
 .idea/
 *.swp
 .DS_Store
 
-# Prisma
-prisma/migrations/*
-!prisma/migrations/.gitkeep
-
-# Misc
+# =========================
+# TypeScript / Cache
+# =========================
 *.tsbuildinfo
 .cache/
+
+# =========================
+# Lockfiles (monorepo pnpm)
+# (Optional: keep only root pnpm-lock.yaml)
+# =========================
+frontend/pnpm-lock.yaml
+backend/pnpm-lock.yaml
+

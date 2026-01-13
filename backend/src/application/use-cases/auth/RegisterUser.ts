@@ -1,4 +1,4 @@
-import { v4 as uuidv4 } from 'uuid';
+import { randomUUID } from 'crypto';
 import { IUserRepository } from '../../../domain/repositories/IUserRepository';
 import { User } from '../../../domain/entities/User';
 import { BcryptHasher } from '../../../infrastructure/security/BcryptHasher';
@@ -25,7 +25,7 @@ export class RegisterUser {
 
     // Create user
     const user = User.create({
-      id: uuidv4(),
+      id: randomUUID(),
       email: data.email,
       password: hashedPassword,
       name: data.name,

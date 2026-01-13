@@ -1,32 +1,44 @@
 import React, { createContext, useMemo, useState } from 'react'
+import { clearToken, getToken, setToken } from '@/core/auth/tokenStorage'
+import type { AuthUser } from '@/core/types/Auth'
+import { clearUser, getUser, setUser } from '@/core/auth/userStorage'
+
+type AuthPayload = {
+  token: string
+  user: AuthUser
+}
 
 type AuthState = {
   token: string | null
+  user: AuthUser | null
   isAuthenticated: boolean
-  login: (token: string) => void
+  login: (payload: AuthPayload) => void
   logout: () => void
 }
 
 export const AuthContext = createContext<AuthState | null>(null)
 
-const STORAGE_KEY = 'dm_token'
-
 export default function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [token, setToken] = useState<string | null>(() => localStorage.getItem(STORAGE_KEY))
+  const [token, setTokenState] = useState<string | null>(() => getToken())
+  const [user, setUserState] = useState<AuthUser | null>(() => getUser())
 
   const value = useMemo<AuthState>(() => {
-    const login = (newToken: string) => {
-      localStorage.setItem(STORAGE_KEY, newToken)
-      setToken(newToken)
+    const login = (payload: AuthPayload) => {
+      setToken(payload.token)
+      setUser(payload.user)
+      setTokenState(payload.token)
+      setUserState(payload.user)
     }
 
     const logout = () => {
-      localStorage.removeItem(STORAGE_KEY)
-      setToken(null)
+      clearToken()
+      clearUser()
+      setTokenState(null)
+      setUserState(null)
     }
 
-    return { token, isAuthenticated: Boolean(token), login, logout }
-  }, [token])
+    return { token, user, isAuthenticated: Boolean(token), login, logout }
+  }, [token, user])
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
 }
