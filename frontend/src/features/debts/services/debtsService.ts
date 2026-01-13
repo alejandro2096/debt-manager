@@ -41,7 +41,7 @@ export type CreateDebtDTO = {
     debtorId: string
     amount: number
     description?: string
-    dueDate?: string 
+    dueDate?: string
 }
 
 export type UpdateDebtDTO = {
@@ -85,11 +85,28 @@ export const debtsService = {
         return data.data
     },
 
-    async export(format: 'json' | 'csv' = 'json') {
-        const res = await axiosInstance.get(`/debts/export`, {
+    // async export(format: 'json' | 'csv' = 'json') {
+    //     const res = await axiosInstance.get(`/debts/export`, {
+    //         params: { format },
+    //         responseType: 'blob',
+    //     })
+    //     return res.data as Blob
+    // },
+    async export(format: 'csv' | 'json' = 'csv') {
+        const res = await axiosInstance.get('/debts/export', {
             params: { format },
             responseType: 'blob',
         })
-        return res.data as Blob
+
+        const contentType = res.headers['content-type'] ?? 'application/octet-stream'
+        const disposition = res.headers['content-disposition'] ?? ''
+        const filename = getFilenameFromDisposition(disposition) ?? `debts.${format}`
+
+        return { blob: new Blob([res.data], { type: contentType }), filename }
     },
+}
+
+function getFilenameFromDisposition(disposition: string): string | null {
+    const match = /filename="?([^"]+)"?/i.exec(disposition)
+    return match?.[1] ?? null
 }
